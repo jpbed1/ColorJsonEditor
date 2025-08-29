@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
@@ -22,10 +23,12 @@ import java.util.regex.Pattern;
  * - Favorites panel (user palette) with drag & drop onto parameters
  * - User Palette menu: Save… / Load… (JSON array of hex strings)
  * - Auto-load favorites on startup; auto-save favorites on exit
+ * - File choosers filtered: *.json for theme files; *.palette for user palettes
+ * - About dialog with version information from Git
  *
- * Build (JDK 9+ recommended):
+ * Build (JDK 9+):
  *   javac --release 8 -encoding UTF-8 ColorJsonEditor.java
- *   jar cfe ColorJsonEditor.jar ColorJsonEditor ColorJsonEditor.class
+ *   jar cfe ColorJsonEditor.jar ColorJsonEditor ColorJsonEditor*.class
  * Run:
  *   java -jar ColorJsonEditor.jar [path-to-json]
  */
@@ -51,6 +54,9 @@ public class ColorJsonEditor extends JFrame {
     private String originalJson;
     private String workingJson;
     private List<PaletteEntry> entries;
+    
+    // Persistent last directory
+    private Path lastDirectory;
 
     // ===== Startup / Main =====
     public static void main(String[] args) {
@@ -75,6 +81,9 @@ public class ColorJsonEditor extends JFrame {
         setSize(1240, 740);
         setLocationRelativeTo(null);
         buildUI();
+
+        // Initialize last directory to user's home directory
+        lastDirectory = Paths.get(System.getProperty("user.home", "."));
 
         // Auto-load favorites on startup (ignore if file missing or invalid)
         tryAutoLoadDefaultUserPalette();
@@ -110,6 +119,11 @@ public class ColorJsonEditor extends JFrame {
         mUser.add(miUserLoad);
         mb.add(mUser);
 
+        JMenu mHelp = new JMenu("Help");
+        JMenuItem miAbout = new JMenuItem("About…");
+        mHelp.add(miAbout);
+        mb.add(mHelp);
+
         setJMenuBar(mb);
 
         // ===== Toolbar =====
@@ -142,6 +156,7 @@ public class ColorJsonEditor extends JFrame {
 
         miUserSave.addActionListener(e -> onSaveUserPalette());
         miUserLoad.addActionListener(e -> onLoadUserPalette());
+        miAbout.addActionListener(e -> showAboutDialog());
 
         // ===== Left: parameters list =====
         listModel = new DefaultListModel<>();
@@ -238,7 +253,6 @@ public class ColorJsonEditor extends JFrame {
                 if (t != null) favModel.addElement(new Favorite(t));
             }
         });
-
         removeFavBtn.addActionListener(e -> {
             int idx = favList.getSelectedIndex();
             if (idx >= 0) favModel.remove(idx);
@@ -288,23 +302,16 @@ public class ColorJsonEditor extends JFrame {
     private void onOpen(ActionEvent e) {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Open Palette JSON");
+        fc.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("JSON files (*.json)", "json");
+        fc.addChoosableFileFilter(jsonFilter);
+        fc.setFileFilter(jsonFilter);
+        if (lastDirectory != null) fc.setCurrentDirectory(lastDirectory.toFile());
         int ok = fc.showOpenDialog(this);
         if (ok == JFileChooser.APPROVE_OPTION) {
-            openFile(fc.getSelectedFile().toPath());
-        }
-    }
-
-    private void openFile(Path p) {
-        try {
-            String txt = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
-            currentFile = p;
-            originalJson = txt;
-            workingJson = txt;
-            reparse();
-            setTitle("JSON Color Palette Editor — " + p.getFileName());
-            setButtonsEnabled(true);
-        } catch (IOException ex) {
-            showError("Failed to open file:\n" + ex.getMessage());
+            Path selectedFile = fc.getSelectedFile().toPath();
+            lastDirectory = selectedFile.getParent();
+            openFile(selectedFile);
         }
     }
 
@@ -326,15 +333,25 @@ public class ColorJsonEditor extends JFrame {
     private void onSaveAs(ActionEvent e) {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Save As…");
+        fc.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("JSON files (*.json)", "json");
+        fc.addChoosableFileFilter(jsonFilter);
+        fc.setFileFilter(jsonFilter);
         if (currentFile != null) fc.setSelectedFile(currentFile.getFileName().toFile());
+        if (lastDirectory != null) fc.setCurrentDirectory(lastDirectory.toFile());
         int ok = fc.showSaveDialog(this);
         if (ok == JFileChooser.APPROVE_OPTION) {
             Path out = fc.getSelectedFile().toPath();
+            // auto-append .json if missing
+            if (!out.getFileName().toString().toLowerCase().endsWith(".json")) {
+                out = out.resolveSibling(out.getFileName().toString() + ".json");
+            }
             try {
                 Files.write(out, workingJson.getBytes(StandardCharsets.UTF_8),
                         StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                 currentFile = out;
                 originalJson = workingJson;
+                lastDirectory = out.getParent();
                 setTitle("JSON Color Palette Editor — " + out.getFileName());
                 JOptionPane.showMessageDialog(this, "Saved:\n" + out.toAbsolutePath());
             } catch (IOException ex) {
@@ -344,6 +361,20 @@ public class ColorJsonEditor extends JFrame {
     }
 
     // ===== Parsing & list refresh =====
+
+    private void openFile(Path p) {
+        try {
+            String txt = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+            currentFile = p;
+            originalJson = txt;
+            workingJson = txt;
+            reparse();
+            setTitle("JSON Color Palette Editor — " + p.getFileName());
+            setButtonsEnabled(true);
+        } catch (IOException ex) {
+            showError("Failed to open file:\n" + ex.getMessage());
+        }
+    }
 
     private void reparse() {
         entries = new ArrayList<PaletteEntry>();
@@ -411,11 +442,22 @@ public class ColorJsonEditor extends JFrame {
 
     private void onSaveUserPalette() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Save User Palette (JSON)");
-        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+        fc.setDialogTitle("Save User Palette (*.palette)");
+        fc.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter palFilter = new FileNameExtensionFilter("Palette files (*.palette)", "palette");
+        fc.addChoosableFileFilter(palFilter);
+        fc.setFileFilter(palFilter);
+        if (lastDirectory != null) fc.setCurrentDirectory(lastDirectory.toFile());
+        int sel = fc.showSaveDialog(this);
+        if (sel == JFileChooser.APPROVE_OPTION) {
             Path out = fc.getSelectedFile().toPath();
+            // auto-append .palette if missing
+            if (!out.getFileName().toString().toLowerCase().endsWith(".palette")) {
+                out = out.resolveSibling(out.getFileName().toString() + ".palette");
+            }
             try {
                 saveUserPaletteTo(out);
+                lastDirectory = out.getParent();
                 JOptionPane.showMessageDialog(this, "Saved user palette:\n" + out.toAbsolutePath());
             } catch (IOException ex) {
                 showError("Failed to save user palette:\n" + ex.getMessage());
@@ -425,11 +467,18 @@ public class ColorJsonEditor extends JFrame {
 
     private void onLoadUserPalette() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Load User Palette (JSON)");
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+        fc.setDialogTitle("Load User Palette (*.palette)");
+        fc.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter palFilter = new FileNameExtensionFilter("Palette files (*.palette)", "palette");
+        fc.addChoosableFileFilter(palFilter);
+        fc.setFileFilter(palFilter);
+        if (lastDirectory != null) fc.setCurrentDirectory(lastDirectory.toFile());
+        int sel = fc.showOpenDialog(this);
+        if (sel == JFileChooser.APPROVE_OPTION) {
             Path in = fc.getSelectedFile().toPath();
             try {
                 loadUserPaletteFrom(in, true);
+                lastDirectory = in.getParent();
             } catch (Exception ex) {
                 showError("Failed to load user palette:\n" + ex.getMessage());
             }
@@ -466,11 +515,11 @@ public class ColorJsonEditor extends JFrame {
         if (os.contains("win")) {
             String appdata = System.getenv("APPDATA");
             if (appdata != null && !appdata.isEmpty()) {
-                return Paths.get(appdata, "ColorJsonEditor", "user-palette.json");
+                return Paths.get(appdata, "ColorJsonEditor", "user-palette.palette");
             }
         }
         String home = System.getProperty("user.home", ".");
-        return Paths.get(home, ".colorjsoneditor", "user-palette.json");
+        return Paths.get(home, ".colorjsoneditor", "user-palette.palette");
     }
 
     private void ensureParentDir(Path file) throws IOException {
@@ -555,6 +604,39 @@ public class ColorJsonEditor extends JFrame {
 
     private void showError(String msg) {
         JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showAboutDialog() {
+        String version = getVersion();
+        String aboutText = String.format(
+            "<html><div style='text-align: center;'>" +
+            "<h2>JSON Color Palette Editor</h2>" +
+            "<p><b>Version:</b> %s</p>" +
+            "<p><b>Author:</b> jpbed</p>" +
+            "<p><b>GitHub:</b> <a href='https://github.com/jpbed/ColorJsonEditor'>https://github.com/jpbed/ColorJsonEditor</a></p>" +
+            "<p>A tool for editing color palettes in JSON files</p>" +
+            "</div></html>",
+            version
+        );
+        
+        JOptionPane.showMessageDialog(this, aboutText, "About", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private String getVersion() {
+        try {
+            // Try to get version from git
+            ProcessBuilder pb = new ProcessBuilder("git", "rev-parse", "--short", "HEAD");
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            String version = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            int exitCode = p.waitFor();
+            if (exitCode == 0 && !version.isEmpty()) {
+                return "1.0." + version;
+            }
+        } catch (Exception e) {
+            // Fall back to default version if git command fails
+        }
+        return "1.0.0";
     }
 
     // ===== Data models & renderers =====
