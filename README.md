@@ -2,6 +2,14 @@
 
 A powerful Java Swing application for editing color palettes in JSON files with an intuitive visual interface.
 
+This was developed mainly as a local editor alternative for the JSON files created by Berikai's awesome Bitwig Theme Editor:
+https://github.com/Berikai/bitwig-theme-editor
+
+
+The official online color editor (which I suggest you visit and use first) is out at: 
+https://bitwig.berikai.dev/
+
+
 ![Version](https://img.shields.io/badge/version-v1.0.daf7e7d-blue)
 ![Java](https://img.shields.io/badge/Java-8+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
