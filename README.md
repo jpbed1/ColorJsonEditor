@@ -1,6 +1,6 @@
 # JSON Color Palette Editor
 
-A powerful Java Swing application for editing color palettes in JSON files with an intuitive visual interface.
+A simple UI application for editing color palettes in JSON files with an intuitive visual interface.
 
 This was developed mainly as a local editor alternative for the JSON files created by Berikai's awesome Bitwig Theme Editor:
 https://github.com/Berikai/bitwig-theme-editor
