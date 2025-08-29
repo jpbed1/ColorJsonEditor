@@ -628,7 +628,16 @@ public class ColorJsonEditor extends JFrame {
             ProcessBuilder pb = new ProcessBuilder("git", "rev-parse", "--short", "HEAD");
             pb.redirectErrorStream(true);
             Process p = pb.start();
-            String version = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            
+            // Read the output manually for Java 8 compatibility
+            StringBuilder output = new StringBuilder();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = p.getInputStream().read(buffer)) != -1) {
+                output.append(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+            }
+            
+            String version = output.toString().trim();
             int exitCode = p.waitFor();
             if (exitCode == 0 && !version.isEmpty()) {
                 return "1.0." + version;

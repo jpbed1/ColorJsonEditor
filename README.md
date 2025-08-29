@@ -1,30 +1,22 @@
 # JSON Color Palette Editor
 
-A powerful and user-friendly editor for modifying color palettes in JSON files, originally designed for Bitwig Studio themes but useful for any JSON-based color configuration.
+A powerful Java Swing application for editing color palettes in JSON files with an intuitive visual interface.
+
+![Version](https://img.shields.io/badge/version-v1.0.daf7e7d-blue)
+![Java](https://img.shields.io/badge/Java-8+-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ Features
 
-### 🎨 Core Functionality
-- **Visual Color Editing**: Edit colors with a built-in color picker
+- **Visual Color Editing**: Edit colors with a color picker or hex input
 - **Real-time Preview**: See color changes instantly in the preview panel
-- **Hex Input Support**: Direct hex code input with validation
-- **Search & Filter**: Quickly find specific color entries by name or hex value
-
-### 💾 File Management
-- **Persistent Directory**: Remembers the last directory used for file operations
-- **Multiple File Formats**: Support for JSON theme files and custom palette files
-- **Auto-save Favorites**: User palette automatically saves on exit and loads on startup
-
-### 🎯 User Palette System
-- **Drag & Drop**: Drag colors from favorites directly onto parameters
-- **Custom Palettes**: Save and load your own color palettes
-- **Alpha Channel Support**: Handles both RGB (#RRGGBB) and RGBA (#RRGGBBAA) formats
-- **Smart Alpha Merging**: Preserves alpha channels when applying colors
-
-### 🔧 Professional Features
-- **About Dialog**: Version information pulled from Git commits
-- **Error Handling**: Comprehensive error messages and validation
+- **Smart File Management**: Persistent directory memory across file operations
+- **Drag & Drop**: Drag favorite colors onto parameters for quick updates
+- **User Palette System**: Save and load custom color palettes
+- **Search & Filter**: Quickly find colors by name or hex value
+- **Professional About Dialog**: Version information with Git integration
 - **Cross-platform**: Works on Windows, macOS, and Linux
+- **Java 8 Compatible**: Optimized for broad compatibility
 
 ## 🚀 Quick Start
 
@@ -32,107 +24,116 @@ A powerful and user-friendly editor for modifying color palettes in JSON files, 
 - Java 8 or higher
 - Git (for version information)
 
-### Building from Source
-```bash
-# Compile the application
-javac --release 8 -encoding UTF-8 ColorJsonEditor.java
-
-# Create the JAR file
-jar cfe ColorJsonEditor.jar ColorJsonEditor ColorJsonEditor*.class
-```
-
-### Running the Application
-```bash
-# Run the application
-java -jar ColorJsonEditor.jar
-
-# Or open a specific JSON file
-java -jar ColorJsonEditor.jar path/to/your/theme.json
-```
+### Download & Run
+1. **Download** the latest `ColorJsonEditor.jar` from [Releases](https://github.com/jpbed/ColorJsonEditor/releases)
+2. **Run** the application:
+   ```bash
+   java -jar ColorJsonEditor.jar
+   ```
+3. **Optional**: Open a JSON file directly:
+   ```bash
+   java -jar ColorJsonEditor.jar path/to/your/colors.json
+   ```
 
 ## 📖 Usage Guide
 
 ### Opening Files
-1. Click **File → Open…** or use the toolbar button
-2. Select your JSON file containing color definitions
-3. The application will parse and display all color entries
+- Use **File → Open…** or the **Open** button
+- Supports JSON files with color entries in format: `"name": "#RRGGBB"` or `"name": "#RRGGBBAA"`
+- **Persistent Directory**: File choosers remember your last used directory
 
 ### Editing Colors
-1. **Select a color entry** from the left panel
-2. **Choose your method**:
-   - Click **"Edit Color…"** to use the color picker
-   - Type a hex value and click **"Apply Hex"**
-   - Drag a color from the favorites panel
+1. **Select** a color from the left panel
+2. **Edit** using:
+   - **Color Picker**: Click "Edit Color…" for visual selection
+   - **Hex Input**: Type hex values directly (e.g., `#FF5733`)
+   - **Apply Hex**: Click to apply typed hex values
 
-### Managing Favorites
-- **Add to Favorites**: Select a color and click **"Add Selected"**
-- **Remove from Favorites**: Select a favorite and click **"Remove"**
-- **Save/Load Palettes**: Use **User Palette → Save…** or **Load…**
-- **Drag & Drop**: Drag favorites onto color parameters to apply them
+### User Palette (Favorites)
+- **Add Colors**: Select a parameter and click "Add Selected" in the Favorites panel
+- **Drag & Drop**: Drag favorites onto parameters for instant updates
+- **Save/Load**: Use **User Palette → Save…** or **Load…** to manage your palettes
+- **Auto-save**: Favorites are automatically saved on exit and loaded on startup
 
-### File Operations
-- **Save**: **File → Save** (saves to current file)
-- **Save As**: **File → Save As…** (save to new location)
-- **Revert**: **File → Revert** (restore original file)
+### Advanced Features
+- **Search**: Use the search field to filter colors by name or hex
+- **Revert**: Undo all changes with **File → Revert**
+- **About Dialog**: Access via **Help → About…** for version information
 
 ## 🎨 Supported Color Formats
 
-The editor recognizes color entries in JSON files with this pattern:
+The editor recognizes these JSON color patterns:
 ```json
 {
-  "colorName": "#RRGGBB",
-  "colorWithAlpha": "#RRGGBBAA"
+  "primary": "#FF5733",
+  "secondary": "#33FF57",
+  "accent": "#3357FF",
+  "transparent": "#FF573380"
 }
 ```
 
-### Color Format Rules
-- **RGB**: 6-digit hex codes (#RRGGBB)
-- **RGBA**: 8-digit hex codes (#RRGGBBAA)
-- **Alpha Preservation**: When applying colors, alpha channels are preserved based on the target format
+- **6-digit hex**: `#RRGGBB` (RGB colors)
+- **8-digit hex**: `#RRGGBBAA` (RGBA colors with alpha)
 
 ## 🔧 Advanced Features
 
 ### Persistent Directory
-- The application remembers the last directory used for file operations
-- All file dialogs (Open, Save, Save As, User Palette) use this persistent directory
-- Automatically initialized to your home directory on first run
+- File choosers automatically remember the last directory used
+- Works across all file operations (Open, Save As, User Palette)
+- Improves workflow efficiency for repeated operations
 
 ### Version Information
-- **About Dialog**: Access via **Help → About…**
-- **Git Integration**: Version automatically pulled from current Git commit
-- **Fallback**: Uses "1.0.0" if Git is not available
+- **Git Integration**: Version numbers are automatically generated from Git commit hashes
+- **About Dialog**: Shows current version, author, and GitHub repository link
+- **Fallback**: Gracefully handles environments without Git
 
 ### User Palette Auto-save
-- Favorites are automatically saved to:
-  - **Windows**: `%APPDATA%\ColorJsonEditor\user-palette.palette`
-  - **Other OS**: `~/.colorjsoneditor/user-palette.palette`
-- Automatically loads on application startup
+- **Automatic**: Favorites are saved automatically when the application closes
+- **Smart Loading**: Favorites are restored on startup
+- **Cross-session**: Your palette persists between application sessions
 
-## 🛠️ Technical Details
+## 🛠 Technical Details
 
-### Build Requirements
-- **JDK**: 9+ (compiles with `--release 8` for compatibility)
-- **Encoding**: UTF-8
-- **Dependencies**: Pure Java (no external libraries)
+### System Requirements
+- **Java**: Version 8 or higher
+- **Memory**: Minimum 512MB RAM
+- **Storage**: ~20KB for the application
 
-### File Formats
-- **Input**: JSON files with color definitions
-- **Output**: Modified JSON files
-- **User Palettes**: Custom `.palette` files (JSON array format)
+### File Locations
+- **Application**: `ColorJsonEditor.jar`
+- **User Palette**: 
+  - Windows: `%APPDATA%\ColorJsonEditor\user-palette.palette`
+  - Other: `~/.colorjsoneditor/user-palette.palette`
 
-## 📝 License
+### Build Instructions
+```bash
+# Compile (requires JDK 8+)
+javac --release 8 -encoding UTF-8 ColorJsonEditor.java
+
+# Create JAR
+jar cfe ColorJsonEditor.jar ColorJsonEditor ColorJsonEditor*.class
+```
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-Feel free to submit issues, feature requests, or pull requests to improve the application.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 👨‍💻 Author
 
 **jpbed** - [GitHub Profile](https://github.com/jpbed)
 
+**Repository**: [https://github.com/jpbed/ColorJsonEditor](https://github.com/jpbed/ColorJsonEditor)
+
 ---
 
-*Originally designed for Bitwig Studio themes but useful for any JSON-based color configuration.*
+**Latest Version**: v1.0.daf7e7d  
+**Last Updated**: August 2025
 

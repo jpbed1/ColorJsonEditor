@@ -62,3 +62,4 @@ After running the application:
 - **Issues**: Create an issue on GitHub
 - **Repository**: https://github.com/jpbed/ColorJsonEditor
 - **License**: MIT License
+

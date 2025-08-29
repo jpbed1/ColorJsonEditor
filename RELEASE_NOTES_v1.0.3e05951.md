@@ -100,3 +100,4 @@ This project is licensed under the MIT License.
 **Repository**: https://github.com/jpbed/ColorJsonEditor  
 **Version**: v1.0.3e05951  
 **Release Date**: August 29, 2025
+
